@@ -3,6 +3,7 @@ mod db;
 mod routes;
 mod models;
 mod services;
+mod common;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
