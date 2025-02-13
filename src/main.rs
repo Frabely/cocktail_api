@@ -1,4 +1,5 @@
-use actix_web::{App, HttpServer};
+use actix_web::{web, App, HttpServer};
+use env_logger;
 mod db;
 mod routes;
 mod models;
@@ -7,11 +8,12 @@ mod common;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let pool = db::init_db().await.expect("Datenbankverbindung fehlgeschlagen");
+    env_logger::init();
+    let pool = db::init_db().await.expect("Datenbankverbindung felgeschlagen");
 
     HttpServer::new(move || {
         App::new()
-            .app_data(pool.clone())
+            .app_data(web::Data::new(pool.clone()))
             .configure(routes::init)
     })
         .bind("127.0.0.1:8080")?
