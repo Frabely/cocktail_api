@@ -6,48 +6,41 @@ use crate::models::user::User;
 use crate::models::create_user_dto::CreateUserDto;
 
 pub async fn get_all_users(pool: &PgPool) -> Result<Vec<User>, Error> {
-    let result = sqlx::query!(
+    let users = sqlx::query!(
         r#"
-        SELECT id, username, email, created_on, language, unit_of_measure_liquids, unit_of_measure_solids
+        SELECT
+            id,
+            username AS name,
+            email,
+            created_on,
+            language AS "language: LanguageCode",
+            unit_of_measure_liquids,
+            unit_of_measure_solids
         FROM general.users
         "#
     )
         .fetch_all(pool)
-        .await?;
-
-    let users = result
+        .await?
         .into_iter()
         .map(|row| {
-            let language = match row.language {
-                Some(lang) => match LanguageCode::try_from(lang) {
-                    Ok(parsed_lang) => Some(parsed_lang),
-                    Err(_) => return Err(Error::from(sqlx::Error::Decode("Invalid language code".into()))),
-                },
-                None => None,
-            };
+            let unit_of_measure_liquids = row
+                .unit_of_measure_liquids
+                .map(UnitOfMeasureLiquids::try_from)
+                .transpose()
+                .map_err(|e| Error::Decode(e.into()))?;
 
-            let unit_of_measure_liquids = match row.unit_of_measure_liquids {
-                Some(unit) => match UnitOfMeasureLiquids::try_from(unit) {
-                    Ok(parsed_unit) => Some(parsed_unit),
-                    Err(_) => return Err(Error::from(sqlx::Error::Decode("Invalid unit_of_measure_liquids code".into()))),
-                },
-                None => None,
-            };
-
-            let unit_of_measure_solids = match row.unit_of_measure_solids {
-                Some(unit) => match UnitOfMeasureSolids::try_from(unit) {
-                    Ok(parsed_unit) => Some(parsed_unit),
-                    Err(_) => return Err(Error::from(sqlx::Error::Decode("Invalid unit_of_measure_solids code".into()))),
-                },
-                None => None,
-            };
+            let unit_of_measure_solids = row
+                .unit_of_measure_solids
+                .map(UnitOfMeasureSolids::try_from)
+                .transpose()
+                .map_err(|e| Error::Decode(e.into()))?;
 
             Ok(User {
                 id: row.id,
-                name: row.username,
+                name: row.name,
                 email: row.email,
                 created_on: row.created_on,
-                language,
+                language: row.language,
                 unit_of_measure_liquids,
                 unit_of_measure_solids,
             })
@@ -57,61 +50,89 @@ pub async fn get_all_users(pool: &PgPool) -> Result<Vec<User>, Error> {
     Ok(users)
 }
 
-struct UserOutput {
-    id: i32,
-    created_on: chrono::NaiveDateTime,
-}
 
-pub async fn create_user(pool: &PgPool, user_input: CreateUserDto) -> Result<User, sqlx::Error> {
+
+// pub async fn get_all_users(pool: &PgPool) -> Result<Vec<User>, Error> {
+//     let result = sqlx::query!(
+//         r#"
+//         SELECT id, username, email, created_on, language, unit_of_measure_liquids, unit_of_measure_solids
+//         FROM general.users
+//         "#
+//     )
+//         .fetch_all(pool)
+//         .await?;
+//
+//     let users = result
+//         .into_iter()
+//         .map(|row| {
+//             let language = match row.language {
+//                 Some(lang) => match LanguageCode::try_from(lang) {
+//                     Ok(parsed_lang) => Some(parsed_lang),
+//                     Err(_) => return Err(Error::from(Error::Decode("Invalid language code".into()))),
+//                 },
+//                 None => None,
+//             };
+//
+//             let unit_of_measure_liquids = match row.unit_of_measure_liquids {
+//                 Some(unit) => match UnitOfMeasureLiquids::try_from(unit) {
+//                     Ok(parsed_unit) => Some(parsed_unit),
+//                     Err(_) => return Err(Error::from(Error::Decode("Invalid unit_of_measure_liquids code".into()))),
+//                 },
+//                 None => None,
+//             };
+//
+//             let unit_of_measure_solids = match row.unit_of_measure_solids {
+//                 Some(unit) => match UnitOfMeasureSolids::try_from(unit) {
+//                     Ok(parsed_unit) => Some(parsed_unit),
+//                     Err(_) => return Err(Error::from(Error::Decode("Invalid unit_of_measure_solids code".into()))),
+//                 },
+//                 None => None,
+//             };
+//
+//             Ok(User {
+//                 id: row.id,
+//                 name: row.username,
+//                 email: row.email,
+//                 created_on: row.created_on,
+//                 language,
+//                 unit_of_measure_liquids,
+//                 unit_of_measure_solids,
+//             })
+//         })
+//         .collect::<Result<Vec<User>, Error>>()?;
+//
+//     Ok(users)
+// }
+
+pub async fn create_user(pool: &PgPool, user_input: CreateUserDto) -> Result<User, Error> {
+    let lang = user_input.language.as_deref();
     let result = sqlx::query!(
         r#"
         INSERT INTO general.users (username, email, language, unit_of_measure_liquids, unit_of_measure_solids)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, created_on, language, unit_of_measure_liquids, unit_of_measure_solids
+        VALUES ($1, $2, $3::text::general.language_code, $4, $5)
+        RETURNING id, created_on, username, email,
+                  language AS "language: Option<LanguageCode>",
+                  unit_of_measure_liquids,
+                  unit_of_measure_solids
         "#,
         user_input.username,
         user_input.email,
-        user_input.language,
+        lang,
         user_input.unit_of_measure_liquids,
         user_input.unit_of_measure_solids
     )
         .fetch_one(pool)
         .await?;
 
-    let language = match result.language {
-        Some(lang) => match LanguageCode::try_from(lang) {
-            Ok(parsed_lang) => Some(parsed_lang),
-            Err(_) => return Err(sqlx::Error::Decode("Invalid language code".into())),
-        },
-        None => None,
-    };
-
-    let unit_of_measure_liquids = match result.unit_of_measure_liquids {
-        Some(unit) => match UnitOfMeasureLiquids::try_from(unit) {
-            Ok(parsed_unit) => Some(parsed_unit),
-            Err(_) => return Err(sqlx::Error::Decode("Invalid unit_of_measure_liquids code".into())),
-        },
-        None => None,
-    };
-
-    let unit_of_measure_solids = match result.unit_of_measure_solids {
-        Some(unit) => match UnitOfMeasureSolids::try_from(unit) {
-            Ok(parsed_unit) => Some(parsed_unit),
-            Err(_) => return Err(sqlx::Error::Decode("Invalid unit_of_measure_solids code".into())),
-        },
-        None => None,
-    };
-
-    let user = User {
+    Ok(User {
         id: result.id,
-        name: user_input.username.clone(),
-        email: user_input.email.clone(),
+        name: result.username,
+        email: result.email,
         created_on: result.created_on,
-        language,
-        unit_of_measure_liquids,
-        unit_of_measure_solids,
-    };
-
-    Ok(user)
+        language: result.language.unwrap(),
+        unit_of_measure_liquids: Some(UnitOfMeasureLiquids::try_from(result.unit_of_measure_liquids.unwrap()).unwrap()),
+        unit_of_measure_solids: Some(UnitOfMeasureSolids::try_from(result.unit_of_measure_solids.unwrap()).unwrap()),
+    })
 }
+
 

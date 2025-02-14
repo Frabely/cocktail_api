@@ -4,7 +4,7 @@ use crate::models::create_user_dto::CreateUserDto;
 use crate::services::user_service::{create_user, get_all_users};
 
 #[get("/users")]
-async fn list_users(pool: web::Data<PgPool>) -> impl Responder {
+async fn get_all_users_handler(pool: web::Data<PgPool>) -> impl Responder {
     match get_all_users(pool.get_ref()).await {
         Ok(users) => HttpResponse::Ok().json(users),
         Err(_) => HttpResponse::InternalServerError().finish(),

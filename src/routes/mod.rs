@@ -4,6 +4,6 @@ pub mod user;
 
 pub fn init(cfg: &mut web::ServiceConfig) {
     cfg
-        .service(user::list_users)
+        .service(user::get_all_users_handler)
         .service(user::create_user_handler);
 }

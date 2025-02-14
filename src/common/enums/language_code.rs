@@ -1,17 +1,23 @@
+use sqlx::Type;
+use std::convert::TryFrom;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Type)]
+#[sqlx(type_name = "language_code")]
 pub enum LanguageCode {
-    EnUS = 1,
-    DeDE = 2
+    #[sqlx(rename = "en-US")]
+    EnUS,
+    #[sqlx(rename = "de-DE")]
+    DeDE,
 }
 
-impl TryFrom<i32> for LanguageCode {
+impl TryFrom<&str> for LanguageCode {
     type Error = String;
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
-            1 => Ok(LanguageCode::EnUS),
-            2 => Ok(LanguageCode::DeDE),
+            "en-US" => Ok(LanguageCode::EnUS),
+            "de-DE" => Ok(LanguageCode::DeDE),
             _ => Err(format!("Invalid LanguageCode value: {}", value)),
         }
     }
