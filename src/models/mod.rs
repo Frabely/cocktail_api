@@ -1,3 +1,5 @@
-pub mod user;
-pub mod cocktail;
-pub mod create_user_dto;
+pub mod user_model;
+pub mod cocktail_model;
+pub mod ingredient_model;
+pub mod cocktail_ingredient_model;
+pub mod measure_unit_model;

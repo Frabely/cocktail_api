@@ -2,9 +2,10 @@ use serde::{Serialize, Deserialize};
 use sqlx::FromRow;
 
 #[derive(Serialize, Deserialize, FromRow)]
-pub struct Cocktail {
+pub struct IngredientModel {
     id: i32,
-    is_alcoholic: bool,
+    name: String,
+    alcohol_volume: f64,
     modified_on: chrono::NaiveDateTime,
     created_on: chrono::NaiveDateTime,
 }

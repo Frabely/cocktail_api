@@ -6,7 +6,7 @@ use crate::common::enums::{
     unit_of_measure_solids::UnitOfMeasureSolids};
 
 #[derive(Serialize, Deserialize, FromRow)]
-pub struct User {
+pub struct UserModel {
     pub id: i32,
     pub name: String,
     pub email: String,

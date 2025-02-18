@@ -2,10 +2,10 @@ use sqlx::{Error, PgPool};
 use crate::common::enums::language_code::LanguageCode;
 use crate::common::enums::unit_of_measure_liquids::UnitOfMeasureLiquids;
 use crate::common::enums::unit_of_measure_solids::UnitOfMeasureSolids;
-use crate::models::user::User;
-use crate::models::create_user_dto::CreateUserDto;
+use crate::models::user_model::UserModel;
+use crate::common::dtos::create_user_dto::CreateUserDto;
 
-pub async fn get_all_users(pool: &PgPool) -> Result<Vec<User>, Error> {
+pub async fn get_all_users(pool: &PgPool) -> Result<Vec<UserModel>, Error> {
     let users = sqlx::query!(
         r#"
         SELECT
@@ -35,7 +35,7 @@ pub async fn get_all_users(pool: &PgPool) -> Result<Vec<User>, Error> {
                 .transpose()
                 .map_err(|e| Error::Decode(e.into()))?;
 
-            Ok(User {
+            Ok(UserModel {
                 id: row.id,
                 name: row.name,
                 email: row.email,
@@ -45,7 +45,7 @@ pub async fn get_all_users(pool: &PgPool) -> Result<Vec<User>, Error> {
                 unit_of_measure_solids,
             })
         })
-        .collect::<Result<Vec<User>, Error>>()?;
+        .collect::<Result<Vec<UserModel>, Error>>()?;
 
     Ok(users)
 }
@@ -104,7 +104,7 @@ pub async fn get_all_users(pool: &PgPool) -> Result<Vec<User>, Error> {
 //     Ok(users)
 // }
 
-pub async fn create_user(pool: &PgPool, user_input: CreateUserDto) -> Result<User, Error> {
+pub async fn create_user(pool: &PgPool, user_input: CreateUserDto) -> Result<UserModel, Error> {
     let lang = user_input.language.as_deref();
     let result = sqlx::query!(
         r#"
@@ -124,7 +124,7 @@ pub async fn create_user(pool: &PgPool, user_input: CreateUserDto) -> Result<Use
         .fetch_one(pool)
         .await?;
 
-    Ok(User {
+    Ok(UserModel {
         id: result.id,
         name: result.username,
         email: result.email,
