@@ -1,5 +1,7 @@
 use actix_web::{web, App, HttpServer};
 use env_logger;
+// use crate::services::cocktail_service::get_all_cocktails;
+
 mod db;
 mod routes;
 mod models;
@@ -16,7 +18,9 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool.clone()))
             .configure(routes::init)
     })
-        .bind("127.0.0.1:8080")?
+        .bind(("127.0.0.1", 8080))?
         .run()
         .await
+
+
 }

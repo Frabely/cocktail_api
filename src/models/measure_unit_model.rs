@@ -4,7 +4,7 @@ use crate::common::enums::measure_unit::MeasureUnit;
 
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct MeasureUnitModel {
-    id: i32,
-    name: String,
-    abbreviation: MeasureUnit,
+    pub id: i32,
+    pub name: String,
+    pub abbreviation: MeasureUnit,
 }

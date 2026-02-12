@@ -3,9 +3,9 @@ use sqlx::FromRow;
 
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct IngredientModel {
-    id: i32,
-    name: String,
-    alcohol_volume: f64,
-    modified_on: chrono::NaiveDateTime,
-    created_on: chrono::NaiveDateTime,
+    pub id: i32,
+    pub name: String,
+    pub alcohol_volume: f64,
+    pub modified_on: chrono::NaiveDateTime,
+    pub created_on: chrono::NaiveDateTime,
 }

@@ -2,28 +2,28 @@ DO $$
     DECLARE
         cocktail_id INT;
         tequila_id INT;
-        orange_juice_id INT;
-        grenadine_id INT;
+        lime_id INT;
+        triple_sec_id INT;
         unit_ml INT;
     BEGIN
         SELECT c.id INTO cocktail_id
         FROM drinks.cocktails c
                  JOIN drinks.cocktail_translation ct ON c.id = ct.cocktail_id
-        WHERE ct.name = 'Tequila Sunrise'
+        WHERE ct.name = 'Margarita'
         LIMIT 1;
 
-        IF cocktail_id IS NOT NULL THEN
-            RETURN;
-        END IF;
+--         IF cocktail_id IS NOT NULL THEN
+--             RETURN;
+--         END IF;
 
         INSERT INTO drinks.cocktails (is_alcoholic)
         VALUES (TRUE)
         RETURNING id INTO cocktail_id;
 
-        INSERT INTO drinks.cocktail_translation (cocktail_id, language_code, name, description)
+        INSERT INTO drinks.cocktail_translation (cocktail_id, language_code, name, instructions)
         VALUES
-            (cocktail_id, 'en-US', 'Tequila Sunrise', '1. Pour tequila and orange juice into a glass with ice. 2. Slowly add grenadine. 3. Let it settle to create the sunrise effect.'),
-            (cocktail_id, 'de-DE', 'Tequila Sunrise', '1. Tequila und Orangensaft in ein Glas mit Eis geben. 2. Grenadine langsam hinzufügen. 3. Warten, bis der Sunrise-Effekt entsteht.');
+            (cocktail_id, 'en-US', 'Margarita', '1. Prepare the salted rim on the glass. 2. Shake all ingredients with ice. 3. Strain into the glass.'),
+            (cocktail_id, 'de-DE', 'Margarita', '1. Salzrand auf dem Glas vorbereiten. 2. Zutaten mit Eis shaken. 3. In das Glas abseihen.');
 
         SELECT i.id INTO tequila_id
         FROM drinks.ingredients i
@@ -37,28 +37,28 @@ DO $$
             VALUES (tequila_id, 'en-US', 'Tequila'), (tequila_id, 'de-DE', 'Tequila');
         END IF;
 
-        SELECT i.id INTO orange_juice_id
+        SELECT i.id INTO lime_id
         FROM drinks.ingredients i
                  JOIN drinks.ingredient_translations it ON i.id = it.ingredient_id
-        WHERE it.name = 'Orange Juice' AND i.alcohol_volume = 0.0
+        WHERE it.name = 'Lime Juice' AND i.alcohol_volume = 0.0
         LIMIT 1;
 
-        IF orange_juice_id IS NULL THEN
-            INSERT INTO drinks.ingredients (alcohol_volume) VALUES (0.0) RETURNING id INTO orange_juice_id;
+        IF lime_id IS NULL THEN
+            INSERT INTO drinks.ingredients (alcohol_volume) VALUES (0.0) RETURNING id INTO lime_id;
             INSERT INTO drinks.ingredient_translations (ingredient_id, language_code, name)
-            VALUES (orange_juice_id, 'en-US', 'Orange Juice'), (orange_juice_id, 'de-DE', 'Orangensaft');
+            VALUES (lime_id, 'en-US', 'Lime Juice'), (lime_id, 'de-DE', 'Limettensaft');
         END IF;
 
-        SELECT i.id INTO grenadine_id
+        SELECT i.id INTO triple_sec_id
         FROM drinks.ingredients i
                  JOIN drinks.ingredient_translations it ON i.id = it.ingredient_id
-        WHERE it.name = 'Grenadine' AND i.alcohol_volume = 0.0
+        WHERE it.name = 'Triple Sec' AND i.alcohol_volume = 0.3
         LIMIT 1;
 
-        IF grenadine_id IS NULL THEN
-            INSERT INTO drinks.ingredients (alcohol_volume) VALUES (0.0) RETURNING id INTO grenadine_id;
+        IF triple_sec_id IS NULL THEN
+            INSERT INTO drinks.ingredients (alcohol_volume) VALUES (0.3) RETURNING id INTO triple_sec_id;
             INSERT INTO drinks.ingredient_translations (ingredient_id, language_code, name)
-            VALUES (grenadine_id, 'en-US', 'Grenadine'), (grenadine_id, 'de-DE', 'Grenadine');
+            VALUES (triple_sec_id, 'en-US', 'Triple Sec'), (triple_sec_id, 'de-DE', 'Triple Sec');
         END IF;
 
         SELECT id INTO unit_ml FROM general.measure_units WHERE abbreviation = 'Ml' LIMIT 1;
@@ -66,7 +66,7 @@ DO $$
         INSERT INTO drinks.cocktail_ingredients (ingredients_id, cocktail_id, quantity, measure_unit_id)
         VALUES
             (tequila_id, cocktail_id, 50, unit_ml),
-            (orange_juice_id, cocktail_id, 150, unit_ml),
-            (grenadine_id, cocktail_id, 10, unit_ml)
+            (lime_id, cocktail_id, 25, unit_ml),
+            (triple_sec_id, cocktail_id, 20, unit_ml)
         ON CONFLICT DO NOTHING;
     END $$;

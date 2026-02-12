@@ -1,6 +1,6 @@
-use actix_web::{get, post, web, HttpResponse, Responder};
+/*use actix_web::{get, post, web, HttpResponse, Responder};
 use sqlx::PgPool;
-use crate::models::create_user_dto::CreateUserDto;
+use crate::common::dtos::create_user_dto::CreateUserDto;
 use crate::services::user_service::{create_user, get_all_users};
 
 #[get("/users")]
@@ -24,4 +24,4 @@ async fn create_user_handler(
             HttpResponse::InternalServerError().body("Error creating user")
         }
     }
-}
+}*/
