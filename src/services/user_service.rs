@@ -1,4 +1,5 @@
-/*use sqlx::{Error, PgPool};
+use chrono::NaiveDate;
+use sqlx::{Error, PgPool};
 use crate::common::enums::language_code::LanguageCode;
 use crate::common::enums::unit_of_measure_liquids::UnitOfMeasureLiquids;
 use crate::common::enums::unit_of_measure_solids::UnitOfMeasureSolids;
@@ -39,7 +40,7 @@ pub async fn get_all_users(pool: &PgPool) -> Result<Vec<UserModel>, Error> {
                 id: row.id,
                 name: row.name,
                 email: row.email,
-                created_on: row.created_on,
+                created_on: NaiveDate::from(row.created_on),
                 language: row.language,
                 unit_of_measure_liquids,
                 unit_of_measure_solids,
@@ -128,12 +129,9 @@ pub async fn create_user(pool: &PgPool, user_input: CreateUserDto) -> Result<Use
         id: result.id,
         name: result.username,
         email: result.email,
-        created_on: result.created_on,
+        created_on: NaiveDate::from(result.created_on),
         language: result.language.unwrap(),
         unit_of_measure_liquids: Some(UnitOfMeasureLiquids::try_from(result.unit_of_measure_liquids.unwrap()).unwrap()),
         unit_of_measure_solids: Some(UnitOfMeasureSolids::try_from(result.unit_of_measure_solids.unwrap()).unwrap()),
     })
 }
-
-
-*/

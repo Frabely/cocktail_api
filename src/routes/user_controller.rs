@@ -1,4 +1,4 @@
-/*use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{get, post, web, HttpResponse, Responder};
 use sqlx::PgPool;
 use crate::common::dtos::create_user_dto::CreateUserDto;
 use crate::services::user_service::{create_user, get_all_users};
@@ -11,6 +11,7 @@ async fn get_all_users_handler(pool: web::Data<PgPool>) -> impl Responder {
     }
 }
 
+/*
 #[post("/user")]
 async fn create_user_handler(
     pool: web::Data<PgPool>,
