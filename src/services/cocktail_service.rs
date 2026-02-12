@@ -1,3 +1,4 @@
+use sqlx::types::JsonValue;
 use sqlx::{PgPool};
 use crate::models::cocktail_ingredient_model::CocktailIngredientModel;
 use crate::models::cocktail_model::CocktailModel;
@@ -14,27 +15,27 @@ pub async fn get_all_cocktails(pool: &PgPool) -> Result<Vec<CocktailModel>, sqlx
             c.modified_on as "modified_on!",
             c.created_on as "created_on!",
             COALESCE(
-                json_agg(
-                    CASE WHEN ci.id IS NOT NULL THEN
-                        json_build_object(
-                            'id', ci.id,
-                            'ingredient_id', i.id,
-                            'cocktail_id', ci.cocktail_id,
-                            'name', i_t.name,
-                            'alcohol_volume', i.alcohol_volume,
-                            'quantity', ci.quantity,
-                            'measure_unit', json_build_object(
-                                'id', mu.id,
-                                'name', mu_t.name,
-                                'abbreviation', mu.abbreviation::text
-                            ),
-                            'modified_on', ci.modified_on,
-                            'created_on', ci.created_on
-                        )
-                    END
-                ) FILTER (WHERE ci.id IS NOT NULL),
-                '[]'
-            )::json::text as "ingredients!"
+              jsonb_agg(
+                CASE WHEN ci.id IS NOT NULL THEN
+                  json_build_object(
+                    'id', ci.id,
+                    'ingredient_id', i.id,
+                    'cocktail_id', ci.cocktail_id,
+                    'name', i_t.name,
+                    'alcohol_volume', i.alcohol_volume,
+                    'quantity', ci.quantity,
+                    'measure_unit', json_build_object(
+                      'id', mu.id,
+                      'name', mu_t.name,
+                      'abbreviation', mu.abbreviation::text
+                    ),
+                    'modified_on', ci.modified_on,
+                    'created_on', ci.created_on
+                  )
+                END
+              ) FILTER (WHERE ci.id IS NOT NULL),
+              '[]'::jsonb
+            ) as "ingredients!: JsonValue"
         FROM drinks.cocktails c
         LEFT JOIN drinks.cocktail_translation ct ON c.id = ct.cocktail_id
         LEFT JOIN drinks.cocktail_ingredients ci ON c.id = ci.cocktail_id
@@ -53,8 +54,9 @@ pub async fn get_all_cocktails(pool: &PgPool) -> Result<Vec<CocktailModel>, sqlx
     let result = query
         .into_iter()
         .map(|row| {
-            let ingredients: Vec<CocktailIngredientModel> = serde_json::from_str(&row.ingredients)
-                .map_err(|e| sqlx::Error::Decode(Box::new(e)))?;
+            let ingredients: Vec<CocktailIngredientModel> =
+                serde_json::from_value(row.ingredients)
+                    .map_err(|e| sqlx::Error::Decode(Box::new(e)))?;
 
             Ok(CocktailModel {
                 id: row.id,
@@ -65,6 +67,7 @@ pub async fn get_all_cocktails(pool: &PgPool) -> Result<Vec<CocktailModel>, sqlx
                 ingredients,
             })
         })
-        .collect();
+        .collect::<Result<Vec<_>, sqlx::Error>>();
+
     result
 }

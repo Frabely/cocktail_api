@@ -1,8 +1,7 @@
-use serde::{Serialize, Deserialize};
-use sqlx::FromRow;
+use chrono::NaiveDate;
 use crate::models::measure_unit_model::MeasureUnitModel;
 
-#[derive(Serialize, Deserialize, FromRow)]
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
 pub struct CocktailIngredientModel {
     pub id: i32,
     pub ingredient_id: i32,
@@ -11,6 +10,6 @@ pub struct CocktailIngredientModel {
     pub alcohol_volume: f64,
     pub quantity: f64,
     pub measure_unit: MeasureUnitModel,
-    pub modified_on: chrono::NaiveDateTime,
-    pub created_on: chrono::NaiveDateTime,
+    pub modified_on: NaiveDate,
+    pub created_on: NaiveDate,
 }
